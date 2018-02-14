@@ -1,0 +1,14 @@
+{
+  "development": {
+    "database": "aws-recognition",
+    "host": "localhost",
+    "port": "5432",
+    "dialect": "postgresql"
+  },
+  "staging": {
+    "use_env_variable": "DATABASE_URL"
+  },
+  "production": {
+    "use_env_variable": "DATABASE_URL"
+  }
+}

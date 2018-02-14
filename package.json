@@ -4,7 +4,7 @@
     "description": "Image Recognition Project API for Intelligent Systems",
     "main": "server.js",
     "scripts": {
-        "dev": "nodemon server.js",
+        "dev": "heroku local:run nodemon server.js",
         "start": "node server.js"
     },
     "repository": {
