@@ -10,8 +10,7 @@ photos = require('./app/routes/photos');
 
 app.use(bodyParser.urlencoded({
     limit: '500mb',
-    extended: true,
-    type: 'application/x-www-form-urlencoded'
+    extended: true
 }));
 
 app.use(bodyParser.json({

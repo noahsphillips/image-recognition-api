@@ -10,13 +10,13 @@ router.get('/', (req, res, next) => {
 });
 
 router.post('/sign', async (req, res, next) => {
+    console.log(req.body)
     var body = _.pick(
         req.body,
         'fileName',
         'fileType',
         'fileSize'
     );
-    console.log(body);
     if (((body.fileSize / (1024*1024)).toFixed(2)) > 4) {
         // If file is over 4mb, drop upload
         return res.json({error: "Too Large", message: "The Image You Tried To Upload Is Too Large."});
@@ -24,7 +24,6 @@ router.post('/sign', async (req, res, next) => {
 
     var s3 = new AWS.S3();
     var fileName = "files/recognition_photos/"+Date.now()+"/"+body.fileName;
-    console.log(fileName);
     var s3Params = {
         Bucket: s3Config.photos.bucket,
         Key: fileName,
@@ -40,7 +39,8 @@ router.post('/sign', async (req, res, next) => {
         const returnData = {
             signedRequest: data,
             url: `https://${s3Config.photos.bucket}.s3.amazonaws.com/${fileName}`,
-            fileName: fileName
+            fileName: fileName,
+            body
         };
         res.json(returnData);
     });
@@ -56,7 +56,7 @@ router.post('/recognize', async (req, res, next) => {
                 Name: body.fileName,
             },
         },
-        MaxLabels: 5,
+        MaxLabels: 1,
         MinConfidence: 80,
     }
 
