@@ -1,7 +1,7 @@
 const express = require('express'),
 bodyParser = require('body-parser'),
 _ = require('underscore'),
-db = require('./models'),
+//db = require('./models'),
 cors = require('cors'),
 app = express(),
 server = require('http').Server(app),
@@ -16,7 +16,7 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json({
     limit: '500mb',
     type: 'application/*'
-})); 
+}));
 
 app.use(cors({
     origin: true,
@@ -28,10 +28,10 @@ app.use(cors({
 app.use('/photos', photos);
 
 const port = process.env.PORT || 8000;
-db.sequelize.sync({force:false}).then(function() {
+//db.sequelize.sync({force:false}).then(function() {
     server.listen(port,() => {
         console.log("We are live on port: "+port);
     });
-});
+//});
 
 require('./app/lib/socket')(io)
