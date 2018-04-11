@@ -16,7 +16,7 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json({
     limit: '500mb',
     type: 'application/*'
-}));
+})); 
 
 app.use(cors({
     origin: true,
