@@ -3,12 +3,26 @@ var _ = require('underscore'),
     AWS = require('aws-sdk'),
     s3Config = require('../lib/aws-s3-config'),
     router = express.Router()
+var multer = require('multer')
+var multerS3 = require('multer-s3')
 
 AWS.config.region = s3Config.photos.region;
 
-router.get('/', (req, res, next) => {
-    res.send('You hit the get route of /photos');
-});
+var s3 = new AWS.S3({ /* ... */ })
+
+var upload = multer({
+    storage: multerS3({
+        s3: s3,
+        bucket: s3Config.photos.bucket,
+        acl: 'public-read',
+        metadata: function (req, file, cb) {
+            cb(null, { fieldName: file.fieldname });
+        },
+        key: function (req, file, cb) {
+            cb(null, Date.now().toString())
+        }
+    })
+})
 
 router.post('/sign', async (req, res, next) => {
     console.log(req.body)
@@ -18,6 +32,7 @@ router.post('/sign', async (req, res, next) => {
         'fileType',
         'fileSize'
     );
+
     if (((body.fileSize / (1024 * 1024)).toFixed(2)) > 4) {
         // If file is over 4mb, drop upload
         return res.json({ error: "Too Large", message: "The Image You Tried To Upload Is Too Large." });
@@ -46,6 +61,10 @@ router.post('/sign', async (req, res, next) => {
         res.json(returnData);
     });
 });
+
+router.post('/upload', upload.single('photo'), async (req, res) => {
+    res.json(req.file)
+})
 
 router.post('/recognize', async (req, res, next) => {
     var body = _.pick(req.body, 'fileName')

@@ -6,7 +6,8 @@ cors = require('cors'),
 app = express(),
 server = require('http').Server(app),
 io = require('socket.io')(server),
-photos = require('./app/routes/photos');
+photos = require('./app/routes/photos'),
+appPhotos = require('./app/routes/app');
 
 app.use(bodyParser.urlencoded({
     limit: '500mb',
@@ -26,6 +27,7 @@ app.use(cors({
 }));
 
 app.use('/photos', photos);
+app.use('/app/photos', appPhotos);
 
 const port = process.env.PORT || 8000;
 //db.sequelize.sync({force:false}).then(function() {
