@@ -2,7 +2,8 @@ var _ = require('underscore'),
     express = require('express'),
     AWS = require('aws-sdk'),
     s3Config = require('../lib/aws-s3-config'),
-    router = express.Router()
+    router = express.Router(),
+    Upload = require('../../models').upload
 var multer = require('multer')
 var multerS3 = require('multer-s3')
 
@@ -25,7 +26,6 @@ var upload = multer({
 })
 
 router.post('/sign', async (req, res, next) => {
-    console.log(req.body)
     var body = _.pick(
         req.body,
         'fileName',
@@ -40,16 +40,20 @@ router.post('/sign', async (req, res, next) => {
 
     var s3 = new AWS.S3();
     var fileName = "files/recognition_photos/" + Date.now() + "/" + body.fileName;
+    var buf = new Buffer(req.body.base64.replace(/^data:image\/\w+;base64,/, ""),'base64')
     var s3Params = {
+        Body: buf,
         Bucket: s3Config.photos.bucket,
         Key: fileName,
         Expires: 60,
-        ContentType: body.fileType,
+        ContentEncoding: 'base64',
+        ContentType: 'image/jpeg',
         ACL: 'public-read'
     };
-
-    s3.getSignedUrl('putObject', s3Params, (err, data) => {
+    
+    s3.putObject(s3Params, (err, data) => {
         if (err) {
+            console.log('error')
             return res.json({ error: err, message: "Your File Could Not Be Uploaded" });
         }
         const returnData = {
@@ -58,6 +62,7 @@ router.post('/sign', async (req, res, next) => {
             fileName: fileName,
             body
         };
+
         res.json(returnData);
     });
 });
@@ -67,7 +72,8 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
 })
 
 router.post('/recognize', async (req, res, next) => {
-    var body = _.pick(req.body, 'fileName')
+    var body = _.pick(req.body, 'fileName', 'url')
+    
     var rekognition = new AWS.Rekognition()
     var rekParams = {
         Image: {
@@ -76,7 +82,7 @@ router.post('/recognize', async (req, res, next) => {
                 Name: body.fileName,
             },
         },
-        MaxLabels: 1,
+        MaxLabels: 5,
         MinConfidence: 80,
     }
 
@@ -92,10 +98,30 @@ router.post('/recognize', async (req, res, next) => {
         });
     } catch (e) {
         return res.status(500).json({ error: e, message: 'Could not recognize the image' })
+    }    
+
+    try {
+        var upload = await Upload.forge({url: body.url, all_labels: data.Labels[0]}).save()
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: error, message: 'Could not recognize the image' })
     }
 
-    return res.json(data)
+    return res.json({upload})
 
 });
+
+router.get('/', async (req, res) => {
+
+    try {
+        var uploads = await Upload.fetchAll()
+    } catch (error) {
+        return res.status(500).json({error})
+    }
+
+    return res.json({uploads})
+    
+
+})
 
 module.exports = router;
